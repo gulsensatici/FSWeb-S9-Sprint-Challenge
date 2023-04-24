@@ -1,4 +1,5 @@
-import React from 'react'
+import React,{useEffect, useState} from 'react'
+import axios from 'axios'
 
 // önerilen başlangıç stateleri
 const initialMessage = ''
@@ -7,10 +8,20 @@ const initialSteps = 0
 const initialIndex = 4 //  "B" nin bulunduğu indexi
 
 export default function AppFunctional(props) {
+  const initial={
+    email: initialEmail,
+    step:initialSteps,
+    index:initialIndex,
+  }
+
+  const grid=[[1,1],[1,2],[1,3],[2,1],[2,2],[2,3],[3,1],[3,2],[3,3]]
+  const [massage,setMassage]=useState();
+  const[result,setResult]=useState(initial);
   // AŞAĞIDAKİ HELPERLAR SADECE ÖNERİDİR.
   // Bunları silip kendi mantığınızla sıfırdan geliştirebilirsiniz.
 
   function getXY() {
+    return grid[result.index][0]+","+grid[result.index][1];
     // Koordinatları izlemek için bir state e sahip olmak gerekli değildir.
     // Bunları hesaplayabilmek için "B" nin hangi indexte olduğunu bilmek yeterlidir.
   }
@@ -19,9 +30,11 @@ export default function AppFunctional(props) {
     // Kullanıcı için "Koordinatlar (2, 2)" mesajını izlemek için bir state'in olması gerekli değildir.
     // Koordinatları almak için yukarıdaki "getXY" helperını ve ardından "getXYMesaj"ı kullanabilirsiniz.
     // tamamen oluşturulmuş stringi döndürür.
+    return massage;
   }
 
   function reset() {
+    setResult(initial);
     // Tüm stateleri başlangıç ​​değerlerine sıfırlamak için bu helperı kullanın.
   }
 
@@ -32,17 +45,54 @@ export default function AppFunctional(props) {
   }
 
   function ilerle(evt) {
+    if(evt.target.id ==="left"&&!(result.index %3 ==0)){
+      setResult({...result, index:(result.index-1),step:(result.step +1)})
+    }
+    if(evt.target.id ==="rigth"&&!((result.index +1 )%3 ==0)){
+      setResult({...result, index:(result.index+1),step:(result.step +1)})
+    }
+    if(evt.target.id ==="up"&&!(result.index < 3)){
+      setResult({...result, index:(result.index-3),step:(result.step +1)})
+    }
+    if(evt.target.id ==="down"&&!(result.index > 5)){
+      setResult({...result, index:(result.index+3),step:(result.step +1)})
+    }
     // Bu event handler, "B" için yeni bir dizin elde etmek üzere yukarıdaki yardımcıyı kullanabilir,
     // ve buna göre state i değiştirir.
+    console.log(evt.target.id);
+    getXYMesaj();
   }
 
   function onChange(evt) {
+    setResult({...result,[evt.target.id]: evt.target.value})
     // inputun değerini güncellemek için bunu kullanabilirsiniz
   }
 
   function onSubmit(evt) {
-    // payloadu POST etmek için bir submit handlera da ihtiyacınız var.
+    evt.preventDefault();
+    const data = {
+      "x": grid[result.index][0],
+      "y": grid[result.index][1],
+      "steps": result.step,
+      "email": result.email,
+    }
+    console.log(data);
+    axios
+      .post("http://localhost:9000/api/result", data)
+      .then((res)=>{
+        console.log(res.data)
+        setMassage(res.data.message);
+      })
   }
+  useEffect(()=>{
+    console.log("result", result); 
+  },[result])
+  useEffect(()=>{
+    getXYMesaj();
+  },[massage])
+
+    // payloadu POST etmek için bir submit handlera da ihtiyacınız var.
+  
 
   return (
     <div id="wrapper" className={props.className}>
@@ -75,4 +125,5 @@ export default function AppFunctional(props) {
       </form>
     </div>
   )
-}
+
+      }
